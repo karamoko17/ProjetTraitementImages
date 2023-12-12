@@ -1,108 +1,100 @@
 import cv2
-from PIL import Image, ImageTk, ImageFilter
 import tkinter as tk
-from tkinter import filedialog
 import numpy as np
-import threading
-from matplotlib import pyplot as plt
+from PIL import Image, ImageTk, ImageFilter
 
-class WebcamApp:
+class App:
     def __init__(self, window, window_title):
         self.window = window
         self.window.title(window_title)
 
         # Initialisation de la capture vidéo à partir de la webcam
         self.vid = cv2.VideoCapture(0)
+
+        # Paramétrage des dimensions de la vidéo capturée
         self.vid.set(cv2.CAP_PROP_FRAME_WIDTH, 563)
         self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 612)
 
         # Création d'un canevas pour afficher la vidéo
-        self.canvas = tk.Canvas(window, width=self.vid.get(cv2.CAP_PROP_FRAME_WIDTH), height=self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.canvas = tk.Canvas(window, width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH), height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.canvas.pack()
 
         # Création d'un menu interactif
         self.create_menu()
 
         # Drapeaux pour indiquer quels traitements doivent être appliqués
-        self.apply_sepia_flag = False
-        self.overlay_snowflakes_flag = False
-        self.change_background_flag = False
-        self.detect_mouth_flag = False
+        self.apply_sepia = False
+        self.overlay_snowflakes = False
+        self.change_background = False
+        self.detect_mouth = False
         
-        # Lancement du processus de mise à jour de la vidéo
+        # Lancement du processus de mise à jour de la capture vidéo
         self.update()
 
-        # Fermeture de la fenêtre
+        # Gestion de la fermeture de la fenêtre
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
         
-    def create_menu(self):
-        menu_frame = tk.Frame(self.window)
-        menu_frame.pack(pady=10)
-
-        # Bouton pour changer le fond
-        tk.Button(menu_frame, text="Changer le fond", command=self.change_background).grid(row=0, column=0, padx=10)
-
-        # Bouton pour appliquer un filtre sépia
-        tk.Button(menu_frame, text="Filtre Sépia", command=self.apply_sepia).grid(row=0, column=1, padx=10)
-
-        # Bouton pour incrustrer des flocons de neige
-        tk.Button(menu_frame, text="Flocons de neige", command=self.overlay_snowflakes).grid(row=0, column=2, padx=10)
-
-        tk.Button(menu_frame, text="Barbe", command=self.detect_mouth).grid(row=0, column=3, padx=10)
-
-        # Bouton pour lancer tous les traitements en même temps
-        tk.Button(menu_frame, text="Chien", command=self.apply_all).grid(row=0, column=4, padx=10)
-
-        # Bouton pour lancer tous les traitements en même temps
-        tk.Button(menu_frame, text="lunette", command=self.apply_all).grid(row=0, column=5, padx=10)
-
-        # Bouton pour lancer tous les traitements en même temps
-        tk.Button(menu_frame, text="Appliquer Tout", command=self.apply_all).grid(row=0, column=6, padx=10)
-
     def apply_sepia(self):
-        self.apply_sepia_flag = not self.apply_sepia_flag
+        self.apply_sepia = not self.apply_sepia
 
     def overlay_snowflakes(self):
-        self.overlay_snowflakes_flag = not self.overlay_snowflakes_flag
+        self.overlay_snowflakes = not self.overlay_snowflakes
 
     def change_background(self):
-        self.change_background_flag = not self.change_background_flag
+        self.change_background = not self.change_background
 
     def detect_mouth(self):
-        self.detect_mouth_flag = not self.detect_mouth_flag
+        self.detect_mouth = not self.detect_mouth
 
     def apply_all(self):
-        self.apply_sepia_flag = True
-        self.overlay_snowflakes_flag = True
-        self.change_background_flag = True
-        # self.detect_mouth_flag = True
+        self.apply_sepia = True
+        self.overlay_snowflakes = True
+        self.change_background = True
+        # self.detect_mouth = True
+
+    def create_menu(self):
+        menu_frame = tk.Frame(self.window)
+        menu_frame.pack(pady = 10)
+
+        # Création des boutons :
+        #       - Changer le fond
+        #       - Filtre Sépia
+        #       - Flocons de neige
+        #       - Barbe
+        #       - Chien
+        #       - Lunettes
+        #       - Appliquer tout
+
+        tk.Button(menu_frame, text = "Changer le fond", command = self.change_background).grid(row = 0, column = 0, padx = 10)
+        tk.Button(menu_frame, text = "Filtre Sépia", command = self.apply_sepia).grid(row = 0, column = 1, padx = 10)
+        tk.Button(menu_frame, text = "Flocons de neige", command = self.overlay_snowflakes).grid(row = 0, column = 2, padx = 10)
+        tk.Button(menu_frame, text = "Barbe", command = self.detect_mouth).grid(row = 0, column = 3, padx = 10)
+        tk.Button(menu_frame, text = "Chien", command = self.apply_all).grid(row = 0, column = 4, padx = 10)
+        tk.Button(menu_frame, text = "Lunettes", command = self.apply_all).grid(row = 0, column = 5, padx = 10)
+        tk.Button(menu_frame, text = "Appliquer tout", command = self.apply_all).grid(row = 0, column = 6, padx = 10)
 
     def update(self):
-        # Capture la trame vidéo
+        # Capture de la trame vidéo
         ret, frame = self.vid.read()
 
-        # Applique les traitements choisis
-        if self.apply_sepia_flag:
+        # Application des traitements choisis
+        if self.apply_sepia:
             frame = self.apply_sepia_filter(frame)
-            
-        if self.overlay_snowflakes_flag:
+        if self.overlay_snowflakes:
             frame = self.overlay_snowflakes_effect(frame)
-
-        if self.change_background_flag:
+        if self.change_background:
             frame = self.change_background_function(frame, cv2.imread("images/fond-563x612.jpg"))
-
-        if self.detect_mouth_flag:
+        if self.detect_mouth:
             frame = self.detect_mouth_function(frame)
 
-        # Met à jour le canevas avec la nouvelle image
-        self.photo = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
-        self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+        # Mise à jour du canva avec la nouvelle image
+        self.photo = ImageTk.PhotoImage(image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+        self.canvas.create_image(0, 0, image = self.photo, anchor = tk.NW)
 
-        # Mise à jour périodique
+        # Appel récursif périodique
         self.window.after(10, self.update)
 
     def apply_sepia_filter(self, frame):
-       # Applique un filtre sépia à l'image entière avec OpenCV
         sepia_matrix = np.array([[0.393, 0.769, 0.189],
                                 [0.349, 0.686, 0.168],
                                 [0.272, 0.534, 0.131]])
@@ -113,13 +105,10 @@ class WebcamApp:
         return sepia_frame
 
     def overlay_snowflakes_effect(self, frame):
-        # Incruste des flocons de neige animés dans le fond
-        # Vous pouvez implémenter cette fonctionnalité en ajoutant des éléments interactifs (par exemple, des flocons de neige) dans le fond
-        # Ici, nous allons simplement superposer des pixels blancs à des positions aléatoires
         num_snowflakes = 50
         for _ in range(num_snowflakes):
             x, y = np.random.randint(0, frame.shape[1]), np.random.randint(0, frame.shape[0])
-            frame[y:y + 4, x:x + 4] = [255, 255, 255]  # Les flocons de neige sont représentés par des pixels blancs
+            frame[y:y + 4, x:x + 4] = [255, 255, 255]
 
         return frame
 
@@ -197,7 +186,6 @@ class WebcamApp:
         return image
     
     def on_close(self):
-        # Libération de la capture vidéo lors de la fermeture de l'application
         if self.vid.isOpened():
             self.vid.release()
         self.window.destroy()
@@ -205,5 +193,5 @@ class WebcamApp:
 
 # Création de l'application
 root = tk.Tk()
-app = WebcamApp(root, "Webcam App")
+app = App(root, "App")
 root.mainloop()
