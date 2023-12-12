@@ -23,10 +23,11 @@ class WebcamApp:
 
         # Drapeaux pour indiquer quels traitements doivent être appliqués
         self.apply_sepia_flag = False
-        self.overlay_image_flag = False
         self.overlay_snowflakes_flag = False
         self.change_background_flag = False
+        self.detect_mouth_flag = False
         
+       
         # Lancement du processus de mise à jour de la vidéo
         self.update()
 
@@ -43,37 +44,38 @@ class WebcamApp:
         # Bouton pour appliquer un filtre sépia
         tk.Button(menu_frame, text="Filtre Sépia", command=self.apply_sepia).grid(row=0, column=1, padx=10)
 
-        # Bouton pour incrustrer une image
-        tk.Button(menu_frame, text="Incruster Image", command=self.overlay_image).grid(row=0, column=2, padx=10)
-
         # Bouton pour incrustrer des flocons de neige
-        tk.Button(menu_frame, text="Flocons de neige", command=self.overlay_snowflakes).grid(row=0, column=3, padx=10)
-
+        tk.Button(menu_frame, text="Flocons de neige", command=self.overlay_snowflakes).grid(row=0, column=2, padx=10)
+        
         # Bouton pour lancer tous les traitements en même temps
-        tk.Button(menu_frame, text="Appliquer Tout", command=self.apply_all).grid(row=0, column=4, padx=10)
+        tk.Button(menu_frame, text="Barbe", command=self.detect_mouth).grid(row=0, column=3, padx=10)
+        
+        # Bouton pour lancer tous les traitements en même temps
+        tk.Button(menu_frame, text="Chien", command=self.apply_all).grid(row=0, column=4, padx=10)
+        
+        # Bouton pour lancer tous les traitements en même temps
+        tk.Button(menu_frame, text="lunette", command=self.apply_all).grid(row=0, column=5, padx=10)
+        
+        # Bouton pour lancer tous les traitements en même temps
+        tk.Button(menu_frame, text="Appliquer Tout", command=self.apply_all).grid(row=0, column=6, padx=10)
 
     def apply_sepia(self):
         self.apply_sepia_flag = not self.apply_sepia_flag
-
-    def overlay_image(self):
-        self.overlay_image_flag = not self.overlay_image_flag
-        if self.overlay_image_flag:
-            # Demander à l'utilisateur de choisir une image à incrustrer
-            file_path = filedialog.askopenfilename()
-            if file_path:
-                self.overlay_image_path = file_path
 
     def overlay_snowflakes(self):
         self.overlay_snowflakes_flag = not self.overlay_snowflakes_flag
 
     def change_background(self):
         self.change_background_flag = not self.change_background_flag
+        
+    def detect_mouth(self):
+        self.detect_mouth_flag = not self.detect_mouth_flag
 
     def apply_all(self):
         self.apply_sepia_flag = True
-        self.overlay_image_flag = True
         self.overlay_snowflakes_flag = True
         self.change_background_flag = True
+        self.detect_mouth_flag = True
 
     def update(self):
         # Capture la trame vidéo
@@ -82,17 +84,16 @@ class WebcamApp:
         # Applique les traitements choisis
         if self.apply_sepia_flag:
             frame = self.apply_sepia_filter(frame)
-
-        if self.overlay_image_flag and hasattr(self, 'overlay_image_path'):
-            overlay_image = cv2.imread(self.overlay_image_path, cv2.IMREAD_UNCHANGED)
-            frame = self.overlay_image_on_face(frame, overlay_image)
             
         if self.overlay_snowflakes_flag:
             frame = self.overlay_snowflakes_effect(frame)
+        
+        if self.detect_mouth_flag:
+            frame = self.detect_mouth_function(frame)
 
         if self.change_background_flag:
             frame = self.change_background_function(frame)
-
+        
         # Met à jour le canevas avec la nouvelle image
         self.photo = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
         self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
@@ -111,21 +112,6 @@ class WebcamApp:
         
         return sepia_frame
 
-
-    def overlay_image_on_face(self, frame, overlay_image):
-        # Incruste une image sur le visage
-        # Implémentez la logique pour détecter le visage et ajuster les coordonnées de l'overlay en conséquence
-        # Dans cet exemple, l'image d'overlay est simplement redimensionnée et superposée au coin supérieur gauche de l'image
-        h, w, _ = frame.shape
-        overlay_image = cv2.resize(overlay_image, (w, h))
-        alpha_overlay = overlay_image[:, :, 3] / 255.0
-        alpha_frame = 1.0 - alpha_overlay
-
-        for c in range(0, 3):
-            frame[:, :, c] = (alpha_overlay * overlay_image[:, :, c] +
-                              alpha_frame * frame[:, :, c])
-
-        return frame
 
     def overlay_snowflakes_effect(self, frame):
         # Incruste des flocons de neige animés dans le fond
@@ -155,6 +141,34 @@ class WebcamApp:
         return mask
     
     
+    def detect_mouth_function(self, image):
+        # Conversion en niveaux de gris
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Utilisez un classificateur Haar pour détecter la bouche
+        mouth_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_mouth.xml')
+        mouths = mouth_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+         
+        # Chargement de l'image par défaut pour la bouche
+        self.default_mouth_image = cv2.imread('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/images/barbe.png', cv2.IMREAD_UNCHANGED)
+
+        # Dessiner l'image par défaut de la bouche dans les zones détectées
+        for (x, y, w, h) in mouths:
+            # Redimensionner l'image de la bouche pour s'adapter à la zone détectée
+            resized_mouth_image = cv2.resize(self.default_mouth_image, (w, h))
+
+            # Obtenir les indices des pixels non nuls dans le canal alpha
+            alpha_indices = resized_mouth_image[:, :, 3] > 0
+
+            # Superposer l'image de la bouche sur l'image principale
+            image[y:y+h, x:x+w][alpha_indices] = (
+                resized_mouth_image[:, :, :3][alpha_indices] * (resized_mouth_image[:, :, 3][alpha_indices] / 255.0) +
+                image[y:y+h, x:x+w][alpha_indices] * (1.0 - resized_mouth_image[:, :, 3][alpha_indices] / 255.0)
+            )
+
+        return image
+    
+    
     def on_close(self):
         # Libération de la capture vidéo lors de la fermeture de l'application
         if self.vid.isOpened():
@@ -165,3 +179,4 @@ class WebcamApp:
 root = tk.Tk()
 app = WebcamApp(root, "Webcam App")
 root.mainloop()
+
