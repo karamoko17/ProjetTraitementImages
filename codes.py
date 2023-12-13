@@ -26,7 +26,6 @@ class App:
         self.apply_sepia = False
         self.overlay_snowflakes = False
         self.change_background = False
-        self.detect_mouth_flag = False
         self.detect_eye_flag = False
         self.detect_nose_flag = False
         self.detect_barbe_flag = False
@@ -45,9 +44,6 @@ class App:
 
     def change_background(self):
         self.change_background = not self.change_background
-
-    def detect_mouth(self):
-        self.detect_mouth_flag = not self.detect_mouth_flag
     
     def detect_eye(self):
         self.detect_eye_flag = not self.detect_eye_flag
@@ -62,7 +58,6 @@ class App:
         self.apply_sepia = True
         self.overlay_snowflakes = True
         self.change_background = True
-        self.detect_mouth_flag = True
         self.detect_eye_flag = True
         self.detect_nose_flag = True
         self.detect_barbe_flag = True
@@ -83,9 +78,9 @@ class App:
         tk.Button(menu_frame, text = "Changer le fond", command = self.change_background).grid(row = 0, column = 0, padx = 10)
         tk.Button(menu_frame, text = "Filtre Sépia", command = self.apply_sepia).grid(row = 0, column = 1, padx = 10)
         tk.Button(menu_frame, text = "Flocons de neige", command = self.overlay_snowflakes).grid(row = 0, column = 2, padx = 10)
-        tk.Button(menu_frame, text = "Barbe", command = self.detect_mouth).grid(row = 0, column = 3, padx = 10)
-        tk.Button(menu_frame, text = "Chien", command = self.apply_all).grid(row = 0, column = 4, padx = 10)
-        tk.Button(menu_frame, text = "Lunettes", command = self.apply_all).grid(row = 0, column = 5, padx = 10)
+        tk.Button(menu_frame, text = "Barbe", command = self.detect_barbe).grid(row = 0, column = 3, padx = 10)
+        tk.Button(menu_frame, text = "Chien", command = self.detect_nose).grid(row = 0, column = 4, padx = 10)
+        tk.Button(menu_frame, text = "Lunettes", command = self.detect_eye).grid(row = 0, column = 5, padx = 10)
         tk.Button(menu_frame, text = "Appliquer tout", command = self.apply_all).grid(row = 0, column = 6, padx = 10)
 
     def update(self):
@@ -99,9 +94,6 @@ class App:
             frame = self.overlay_snowflakes_effect(frame)
         if self.change_background:
             frame = self.change_background_function(frame, cv2.imread("images/fond-563x612.jpg"))
-        if self.detect_mouth:
-            frame = self.detect_mouth_function(frame)
-        
         if self.detect_eye_flag:
             frame = self.detect_eye_function(frame)
             
@@ -182,48 +174,20 @@ class App:
 
         return result
     
-    '''def detect_mouth_function(self, image):
-        # Conversion en niveaux de gris
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # Utilisez un classificateur Haar pour détecter la bouche
-        mouth_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_mouth.xml')
-        mouths = mouth_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-         
-        # Chargement de l'image par défaut pour la bouche
-        self.default_mouth_image = cv2.imread('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/images/barbe.png', cv2.IMREAD_UNCHANGED)
-
-        # Dessiner l'image par défaut de la bouche dans les zones détectées
-        for (x, y, w, h) in mouths:
-            # Redimensionner l'image de la bouche pour s'adapter à la zone détectée
-            resized_mouth_image = cv2.resize(self.default_mouth_image, (w, h))
-
-            # Obtenir les indices des pixels non nuls dans le canal alpha
-            alpha_indices = resized_mouth_image[:, :, 3] > 0
-
-            # Superposer l'image de la bouche sur l'image principale
-            image[y:y+h, x:x+w][alpha_indices] = (
-                resized_mouth_image[:, :, :3][alpha_indices] * (resized_mouth_image[:, :, 3][alpha_indices] / 255.0) +
-                image[y:y+h, x:x+w][alpha_indices] * (1.0 - resized_mouth_image[:, :, 3][alpha_indices] / 255.0)
-            )
-
-        return image'''
-    
-    
     def detect_eye_function(self, image):
         # Conversion en niveaux de gris
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
         # Utilisez un classificateur Haar pour détecter la bouche
-        eye_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
+        eye_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_eye_tree_eyeglasses.xml')
        
         # Détecter les yeux dans l'image
         eyes = eye_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
         # Chargement de l'image par défaut pour les lunettes
-        default_glasses_image = cv2.imread('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/images/lunette.png', cv2.IMREAD_UNCHANGED)
+        default_glasses_image = cv2.imread('images/lunette.png', cv2.IMREAD_UNCHANGED)
         # Load the cascade
-        face_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_frontalface_alt.xml')
+        face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
         # Détection des visages
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
         
@@ -274,13 +238,13 @@ class App:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Utilisez un classificateur Haar pour détecter le nez
-        nose_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_mcs_nose.xml')
+        nose_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_mcs_nose.xml')
        
        # Charger l'image par défaut pour le nez de chien
-        default_nose_image = cv2.imread('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/images/nezchien.png', cv2.IMREAD_UNCHANGED)
+        default_nose_image = cv2.imread('images/nezchien.png', cv2.IMREAD_UNCHANGED)
 
         # Load the cascade
-        face_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_frontalface_alt.xml')
+        face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
         # Détection des visages
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
     
@@ -315,10 +279,10 @@ class App:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
        # Charger l'image par défaut pour le nez de chien
-        default_nose_image = cv2.imread('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/images/barbe.png', cv2.IMREAD_UNCHANGED)
+        default_nose_image = cv2.imread('images/barbe.png', cv2.IMREAD_UNCHANGED)
 
         # Load the cascade
-        face_cascade = cv2.CascadeClassifier('D:/M1 Lyon 2/Traitement d\'image/ProjetTraitementImages/haarcascades/haarcascades/haarcascade_frontalface_alt.xml')
+        face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
         # Détection des visages
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
     
