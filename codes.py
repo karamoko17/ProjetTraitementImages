@@ -86,22 +86,21 @@ class App:
     def update(self):
         # Capture de la trame vidéo
         ret, frame = self.vid.read()
+        virgin_frame = frame.copy()
 
         # Application des traitements choisis
-        if self.apply_sepia:
-            frame = self.apply_sepia_filter(frame)
-        if self.overlay_snowflakes:
-            frame = self.overlay_snowflakes_effect(frame)
         if self.change_background:
             frame = self.change_background_function(frame, cv2.imread("images/fond-563x612.jpg"))
+        if self.overlay_snowflakes:
+            frame = self.overlay_snowflakes_effect(virgin_frame)
         if self.detect_eye_flag:
             frame = self.detect_eye_function(frame)
-            
         if self.detect_nose_flag:
             frame = self.detect_nose_function(frame)
-            
         if self.detect_barbe_flag:
             frame = self.detect_barbe_function(frame)
+        if self.apply_sepia:
+            frame = self.apply_sepia_filter(frame)
 
         # Mise à jour du canva avec la nouvelle image
         self.photo = ImageTk.PhotoImage(image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
@@ -120,52 +119,13 @@ class App:
         
         return sepia_frame
 
-    def overlay_snowflakes_effect(self, frame):
-        num_snowflakes = 50
-        for _ in range(num_snowflakes):
-            x, y = np.random.randint(0, frame.shape[1]), np.random.randint(0, frame.shape[0])
-            frame[y:y + 4, x:x + 4] = [255, 255, 255]
-
-        return frame
-
     def change_background_function(self, sujet, fond):
         height, width, _ = sujet.shape
         fond = cv2.resize(fond, (width, height))
 
-        '''
-        face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
-        gray = cv2.cvtColor(sujet, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-
-        result = sujet.copy()
-    
-        for i in range(faces.shape[0]):
-            center = (faces[i, 0] + int(faces[i, 2] * 0.5), faces[i, 1] + int(faces[i, 3] * 0.5))
-            axes = (int(faces[i, 2] * 0.5), int(faces[i, 3] * 0.5))
-
-            mask_ellipse = np.zeros_like(gray)
-
-            # Dessiner l'ellipse blanche sur un masque
-            cv2.ellipse(mask_ellipse, center, axes, 0, 0, 360, (255), -1)
-
-            distance_threshold = 2 * max(axes)
-            dist_transform = cv2.distanceTransform(mask_ellipse, cv2.DIST_L2, 5)
-            print(distance_threshold)
-            mask_distance = np.uint8(dist_transform <= distance_threshold)
-        '''
-
         lower_white = np.array([160, 160, 160])
         upper_white = np.array([255, 255, 255])
         mask_white = cv2.inRange(sujet, lower_white, upper_white)
-
-        '''
-        final_mask = cv2.bitwise_and(mask_distance, mask_white)
-
-        mask_inv = cv2.bitwise_not(final_mask)
-
-        result = cv2.bitwise_and(result, result, mask=mask_inv)
-        result += cv2.bitwise_and(fond, fond, mask=final_mask)
-        '''
 
         mask_inv = cv2.bitwise_not(mask_white)
 
@@ -174,6 +134,31 @@ class App:
 
         return result
     
+    def overlay_snowflakes_effect(self, frame):
+        num_snowflakes = 75
+
+        lower_white = np.array([160, 160, 160])
+        upper_white = np.array([255, 255, 255])
+        mask_white = cv2.inRange(frame, lower_white, upper_white)
+
+        white_pixels = cv2.findNonZero(mask_white)
+
+        '''
+        if self.change_background:
+            mask_inv = cv2.bitwise_not(mask_white)
+
+            frame = cv2.bitwise_and(frame, frame, mask=mask_inv)
+            frame += cv2.bitwise_and(cv2.imread("images/fond-563x612.jpg"),  cv2.imread("images/fond-563x612.jpg"), mask=mask_white)
+        '''
+
+        if white_pixels is not None:
+                for _ in range(num_snowflakes):
+                    rand_pixel = white_pixels[np.random.randint(0, len(white_pixels))][0]
+                    x, y = rand_pixel[0], rand_pixel[1]
+                    frame[y:y + 4, x:x + 4] = [255, 255, 255]
+
+        return frame
+
     def detect_eye_function(self, image):
         # Conversion en niveaux de gris
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -231,8 +216,7 @@ class App:
                     roi_color[y1:y2, x1:x2, c] = (alpha_s * resized_sunglasses[:, :, c] + alpha_l * roi_color[y1:y2, x1:x2, c])
                 
         return image
-    
-    
+      
     def detect_nose_function(self, image):
         # Conversion en niveaux de gris
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -312,9 +296,6 @@ class App:
                     image[y_offset:y_offset + h, x:x + w, c] = (alpha_n * resized_nose[:, :, c] + alpha_l * image[y_offset:y_offset + h, x:x + w, c])
         
         return image   
-    
-    
-    
 
     def on_close(self):
         if self.vid.isOpened():
