@@ -55,11 +55,11 @@ class App:
     def update_current_filters_label(self):
         filters_applied = {
             "apply_sepia": "sepia",
-            "overlay_snowflakes": "snowflakes",
-            "change_background": "beach",
-            "detect_eye_flag": "glasses",
-            "detect_nose_flag": "dog nose",
-            "detect_barbe_flag": "beard"
+            "overlay_snowflakes": "neige",
+            "change_background": "plage",
+            "detect_eye_flag": "lunettes",
+            "detect_nose_flag": "chien",
+            "detect_barbe_flag": "barbe"
         }
 
         current_filters = [filters_applied[key] for key in filters_applied if getattr(self, key)]
@@ -137,16 +137,6 @@ class App:
         create_image_button(menu_frame, "images/all.png", btn_width, btn_height, self.apply_all, row=0, column=7, padx=10)
         create_image_button(menu_frame, "images/cross.png", btn_width, btn_height, self.stop_all, row=0, column=9, padx=10)
         create_image_button(menu_frame, "images/surprise.png", btn_width, btn_height, self.surprise, row=0, column=8, padx=10)
-
-        '''
-        tk.Button(menu_frame, text = "Changer le fond", command = self.change_background).grid(row = 0, column = 0, padx = 10)
-        tk.Button(menu_frame, text = "Filtre Sépia", command = self.apply_sepia).grid(row = 0, column = 1, padx = 10)
-        tk.Button(menu_frame, text = "Flocons de neige", command = self.overlay_snowflakes).grid(row = 0, column = 2, padx = 10)
-        tk.Button(menu_frame, text = "Barbe", command = self.detect_barbe).grid(row = 0, column = 3, padx = 10)
-        tk.Button(menu_frame, text = "Chien", command = self.detect_nose).grid(row = 0, column = 4, padx = 10)
-        tk.Button(menu_frame, text = "Lunettes", command = self.detect_eye).grid(row = 0, column = 5, padx = 10)
-        tk.Button(menu_frame, text = "Appliquer tout", command = self.apply_all).grid(row = 0, column = 6, padx = 10)
-        '''
 
     def update(self):
         # Capture de la trame vidéo
