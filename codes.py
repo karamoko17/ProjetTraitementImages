@@ -1,12 +1,28 @@
 import cv2
 import tkinter as tk
 import numpy as np
-from PIL import Image, ImageTk, ImageFilter
+import random
+from PIL import Image, ImageTk
+
+images_btn = []
+
+def create_image_button(frame, image_path, width, height, action, row, column, padx):
+        img = Image.open(image_path)
+        img.thumbnail((width, height))
+        photo = ImageTk.PhotoImage(img)
+        images_btn.append(photo)
+        btn = tk.Button(frame, image=photo, command=action, bd=0, relief=tk.FLAT)
+        btn.grid(row=row, column=column, padx=padx)
+        return btn
 
 class App:
     def __init__(self, window, window_title):
         self.window = window
         self.window.title(window_title)
+
+        # Label pour afficher les transformations actuelles
+        self.current_filters_label = tk.Label(self.window, text="", font=("Arial", 14))
+        self.current_filters_label.pack()
 
         # Initialisation de la capture vidéo à partir de la webcam
         self.vid = cv2.VideoCapture(0)
@@ -35,6 +51,14 @@ class App:
 
         # Gestion de la fermeture de la fenêtre
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def update_current_filters_label(self):
+        filters_applied = [
+            "apply_sepia", "overlay_snowflakes", "change_background",
+            "detect_eye_flag", "detect_nose_flag", "detect_barbe_flag"
+        ]
+        current_filters = [fil for fil in filters_applied if getattr(self, fil)]
+        self.current_filters_label.config(text=f"{', '.join(current_filters)}")
         
     def apply_sepia(self):
         self.apply_sepia = not self.apply_sepia
@@ -62,6 +86,27 @@ class App:
         self.detect_nose_flag = True
         self.detect_barbe_flag = True
 
+    def surprise(self):
+        self.stop_all()
+        transformations = [
+            "apply_sepia",
+            "overlay_snowflakes",
+            "change_background",
+            "detect_eye_flag",
+            "detect_nose_flag",
+            "detect_barbe_flag"
+        ]
+        random_transformation = random.choice(transformations)
+        setattr(self, random_transformation, True)
+    
+    def stop_all(self):
+        self.apply_sepia = False
+        self.overlay_snowflakes = False
+        self.change_background = False
+        self.detect_eye_flag = False
+        self.detect_nose_flag = False
+        self.detect_barbe_flag = False
+
     def create_menu(self):
         menu_frame = tk.Frame(self.window)
         menu_frame.pack(pady = 10)
@@ -75,6 +120,20 @@ class App:
         #       - Lunettes
         #       - Appliquer tout
 
+        btn_width = 50
+        btn_height = 50
+
+        create_image_button(menu_frame, "images/beach.png", btn_width, btn_height, self.change_background, row=0, column=0, padx=10)
+        create_image_button(menu_frame, "images/sepia.png", btn_width, btn_height, self.apply_sepia, row=0, column=1, padx=10)
+        create_image_button(menu_frame, "images/snowflakes.png", btn_width, btn_height, self.overlay_snowflakes, row=0, column=2, padx=10)
+        create_image_button(menu_frame, "images/barbe.png", btn_width, btn_height, self.detect_barbe, row=0, column=3, padx=10)
+        create_image_button(menu_frame, "images/chien.png", btn_width, btn_height, self.detect_nose, row=0, column=4, padx=10)
+        create_image_button(menu_frame, "images/lunettes.png", btn_width, btn_height, self.detect_eye, row=0, column=5, padx=10)
+        create_image_button(menu_frame, "images/all.png", btn_width, btn_height, self.apply_all, row=0, column=7, padx=10)
+        create_image_button(menu_frame, "images/cross.png", btn_width, btn_height, self.stop_all, row=0, column=9, padx=10)
+        create_image_button(menu_frame, "images/surprise.png", btn_width, btn_height, self.surprise, row=0, column=8, padx=10)
+
+        '''
         tk.Button(menu_frame, text = "Changer le fond", command = self.change_background).grid(row = 0, column = 0, padx = 10)
         tk.Button(menu_frame, text = "Filtre Sépia", command = self.apply_sepia).grid(row = 0, column = 1, padx = 10)
         tk.Button(menu_frame, text = "Flocons de neige", command = self.overlay_snowflakes).grid(row = 0, column = 2, padx = 10)
@@ -82,6 +141,7 @@ class App:
         tk.Button(menu_frame, text = "Chien", command = self.detect_nose).grid(row = 0, column = 4, padx = 10)
         tk.Button(menu_frame, text = "Lunettes", command = self.detect_eye).grid(row = 0, column = 5, padx = 10)
         tk.Button(menu_frame, text = "Appliquer tout", command = self.apply_all).grid(row = 0, column = 6, padx = 10)
+        '''
 
     def update(self):
         # Capture de la trame vidéo
@@ -105,6 +165,9 @@ class App:
         # Mise à jour du canva avec la nouvelle image
         self.photo = ImageTk.PhotoImage(image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
         self.canvas.create_image(0, 0, image = self.photo, anchor = tk.NW)
+
+        # Mise à jour du label des filtres en cours
+        self.update_current_filters_label()
 
         # Appel récursif périodique
         self.window.after(10, self.update)
@@ -170,7 +233,7 @@ class App:
         eyes = eye_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
         # Chargement de l'image par défaut pour les lunettes
-        default_glasses_image = cv2.imread('images/lunette.png', cv2.IMREAD_UNCHANGED)
+        default_glasses_image = cv2.imread('images/lunettes.png', cv2.IMREAD_UNCHANGED)
         # Load the cascade
         face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
         # Détection des visages
@@ -225,7 +288,7 @@ class App:
         nose_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_mcs_nose.xml')
        
        # Charger l'image par défaut pour le nez de chien
-        default_nose_image = cv2.imread('images/nezchien.png', cv2.IMREAD_UNCHANGED)
+        default_nose_image = cv2.imread('images/chien.png', cv2.IMREAD_UNCHANGED)
 
         # Load the cascade
         face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
