@@ -53,11 +53,16 @@ class App:
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def update_current_filters_label(self):
-        filters_applied = [
-            "apply_sepia", "overlay_snowflakes", "change_background",
-            "detect_eye_flag", "detect_nose_flag", "detect_barbe_flag"
-        ]
-        current_filters = [fil for fil in filters_applied if getattr(self, fil)]
+        filters_applied = {
+            "apply_sepia": "sepia",
+            "overlay_snowflakes": "snowflakes",
+            "change_background": "beach",
+            "detect_eye_flag": "glasses",
+            "detect_nose_flag": "dog nose",
+            "detect_barbe_flag": "beard"
+        }
+
+        current_filters = [filters_applied[key] for key in filters_applied if getattr(self, key)]
         self.current_filters_label.config(text=f"{', '.join(current_filters)}")
         
     def apply_sepia(self):
